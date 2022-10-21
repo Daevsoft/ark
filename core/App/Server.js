@@ -1,10 +1,13 @@
 const express = require('express')
 const http = require('http');
+const Pipeline = require('./Modules/Pipeline');
 
 module.exports = class Server {
     express;
     server;
     config;
+    modules = [];
+
     createServer(){
         this.express = express()
         this.server = http.createServer(this.express);
@@ -27,7 +30,16 @@ module.exports = class Server {
         this.createServer();
         this.assignEnv();
     }
+    #enableModules(){
+        for (let i = 0; i < this.modules.length; i++) {
+            const _module = this.modules[i];
+            if(_module.constructor instanceof Pipeline){
+                _module.active(this);
+            }
+        }
+    }
     run(){
+        this.#enableModules();
         this.server.listen(this.config.PORT, () => {
             console.log('Server started http://localhost:' + this.config.PORT);
         })

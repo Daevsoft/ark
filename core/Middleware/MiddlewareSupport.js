@@ -2,12 +2,19 @@ const { routeMiddleware } = require("../../app/Http/Kernel");
 
 class MiddlewareSupport{
     bind(app, route){
-        const { name, args } = route.middleware;
+        let handles = route.middlewares.map(middleware => {
+            return this.#assignMiddleware(middleware);
+        });
+        // register middleware into express route
+        app.express.use(route.path, ...handles);
+    }
+    #assignMiddleware(middleware){
+        const { name, _class, args } = middleware;
         const middlewareClass = (typeof(name) == 'string') ? 
-        routeMiddleware[name] : name;
+        routeMiddleware[name] : _class;
         
         if(typeof(middlewareClass) != 'undefined'){
-            this.registerMiddleware(app, route.path, middlewareClass, args)
+            return this.registerMiddleware(middlewareClass, args)
         }
     }
     group(middlewareList){
@@ -18,10 +25,10 @@ class MiddlewareSupport{
             return true
         }, ...(params || []))
     }
-    registerMiddleware(app, path, middlewareClass, params){
-
-        // register middleware into express route
-        app.express.use(path, (request, response, next) => {
+    /** @return {Function} */
+    registerMiddleware(middlewareClass, params){
+        // return handle function of middleware
+        return (request, response, next) => {
             // instantiate middleware object
             const objMiddleware = new middlewareClass(response);
 
@@ -35,7 +42,7 @@ class MiddlewareSupport{
                 // response error when next not executed
                 this.#error(response, middlewareClass);
             }
-        });
+        };
     }
     #error(response, middlewareClass){
         response.send(middlewareClass.name + ' Middleware failed');

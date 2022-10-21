@@ -1,35 +1,50 @@
 const middlewareSupport = require('../Middleware/MiddlewareSupport');
+const Middleware = require('../Middleware/Middleware');
 
 const POST = 'post';
 const GET = 'get';
 const PUT = 'PUT';
 
 class Route{
+    path = null;
+    handler = null;
+    action = null;
+    middlewares = [];
+    excludeMiddlewares = [];
+    static currentMiddleware = null;
+
     static app;
     static allUri = [];
+
+    constructor(options) {
+        this.path = options.path;
+        this.handler = options.handler;
+        this.action = options.action;
+    }
+
     static post(path, handler){
-        const newRoute = new Route();
-        // get current route
-        this.currentRoute = {
+        const newRoute = new Route({
             path: path, handler: handler, action: POST
-        };
-        Route.#addUriCollection(this.currentRoute);
+        });
+        Route.#addUriCollection(newRoute);
         return newRoute;
     }
     static get(path, handler){
-        const newRoute = new Route();
-        // get current route
-        this.currentRoute = {
+        const newRoute = new Route({
             path: path, handler: handler, action: GET
-        };
-        Route.#addUriCollection(this.currentRoute);
+        });
+        Route.#addUriCollection(newRoute);
         return newRoute;
     }
     static #addUriCollection(route){
+        // assign middleware when routes in groups
+        if(Route.currentMiddleware != null && Route.currentMiddleware.length > 0){
+            route.middleware(Route.currentMiddleware);
+        }
         Route.allUri.push(route);
     }
     static register(app){
-        this.app = app;
+        Route.app = app;
         require('../../route/web')
         Route.allUri.forEach(route => {
             if(route.action == POST){
@@ -49,7 +64,7 @@ class Route{
             this.response(req, res, route);
         });
     }
-    response(req, res, route){
+    static response(req, res, route){
         res.header('Content-Type', 'text/html');
         let result = null;
         const handlerType = typeof(route.handler);
@@ -65,7 +80,7 @@ class Route{
             res.send();
         }
     }
-    routeHandlerResult(request, handler){
+    static routeHandlerResult(request, handler){
         let params = null;
         // parameter from uri
         if(request.params != {}){
@@ -77,7 +92,7 @@ class Route{
         }
         return params != null ? handler(params) : handler()
     }
-    handlerController(arrControllerAtMethod){
+    static handlerController(arrControllerAtMethod){
         const [ controllerClass, methodName ]  = arrControllerAtMethod;
         // create controller instantiate
         const instance = new controllerClass();
@@ -86,22 +101,21 @@ class Route{
         let controllerResult = instance[methodName]() || null;
         return controllerResult;
     }
-    clean(){
-        Route.uriGet = null;
-        Route.uriPost = null;
+    static clean(){
+        Route.allUri = [];
     }
-    // name or class
-    middleware(name){
-        if(route){
-            // attach middleware into route collections
-            route.middleware = this.#getMiddlewareData(name);
+    static middleware(array){
+        this.currentMiddleware = array;
+        return {
+            group: (routes) => {
+                routes();
+                Route.currentMiddleware = [];
+            }
         }
-        // bind middleware
-        middlewareSupport.bind(this.app, route);
     }
     #getMiddlewareClass(nameOrClass){
         // check type of name is a middleware class
-        if(typeof(nameOrClass) == 'object'){
+        if(nameOrClass.prototype instanceof Middleware){
             return nameOrClass;
         }
         return null;
@@ -119,10 +133,27 @@ class Route{
         }
         return {
             name: middlewareName,
-            class: middlewareClass,
+            _class: middlewareClass,
             args: params
         };
     }
+    #fixMiddlewareName(name){
+        if(!Array.isArray(name)){
+            name = [ name ];
+        }
+        return name;
+    }
+    /** @param {Middleware|String|Array} name */
+    middleware(name){
+        name = this.#fixMiddlewareName(name);
+        // attach middleware into route collections
+        this.middlewares = name.map(_mName => this.#getMiddlewareData(_mName))
+
+        // bind middleware
+        middlewareSupport.bind(Route.app, this);
+    }
+    withoutMiddleware(name){
+        this.excludeMiddlewares = this.#fixMiddlewareName(name);
+    }
 }
-// const route = new Route();
 module.exports = Route;
