@@ -2,23 +2,29 @@ const { routeMiddleware } = require("../../app/Http/Kernel");
 
 class MiddlewareSupport{
     bind(app, route){
-        let handles = route.middlewares.map(middleware => {
-            return this.#assignMiddleware(middleware);
-        });
+        let handles = route.middlewares
+            .filter(_m => {
+                // removes middleware are exist in exclude list
+                return route.excludeMiddlewares.filter(_ex => {
+                    return _ex.name == _m.name || _ex._class === _m._class
+                }).length === 0;
+            })
+            // mapping middleware functions
+            .map(middleware => {
+                return this.#assignMiddleware(middleware);
+            }
+        );
         // register middleware into express route
-        app.express.use(route.path, ...handles);
+        app.express.use(route.path, handles);
     }
     #assignMiddleware(middleware){
         const { name, _class, args } = middleware;
-        const middlewareClass = (typeof(name) == 'string') ? 
+        const middlewareClass = (_class == null) ? 
         routeMiddleware[name] : _class;
         
         if(typeof(middlewareClass) != 'undefined'){
             return this.registerMiddleware(middlewareClass, args)
         }
-    }
-    group(middlewareList){
-        
     }
     #execute(objMiddleware, request, params){
         return objMiddleware.handle(request, () => {

@@ -3,6 +3,7 @@ const Route = require("../core/Routing/Route");
 const ProductController = require("../app/Controllers/ProductController")
 const HomeController = require("../app/Controllers/HomeController");
 const AuthenticateBasicAuth = require("../app/Http/AuthenticateBasicAuth");
+const Authorize = require("../app/Http/Authorize");
 
 Route.get('/user/:name', _ => {
     return `<h2>hello ${_.name}</h2>`;
@@ -25,11 +26,11 @@ Route.get('/user-role', () => {
     return 'Role Authenticated';
 }).middleware(['role-auth:editor:true', AuthenticateBasicAuth]);
 
-Route.middleware(['can']).group(() => {
+Route.middleware(['can', 'auth.basic']).group(() => {
     Route.get('/sample-a', () => {
         return 'This is sample 1 with group middleware';
     });
     Route.get('/sample-b', () => {
         return 'group middleware + without middleware';
-    }).withoutMiddleware('can'); // TODO: Not yet completed
+    }).withoutMiddleware([Authorize]);
 });

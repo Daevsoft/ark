@@ -1,4 +1,4 @@
-const Middleware = require("../../core/Middleware/Middleware");
+const Middleware = require("../../../core/Middleware/Middleware");
 
 class Authorize extends Middleware{
     handle(request, next){

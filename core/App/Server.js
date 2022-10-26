@@ -9,7 +9,7 @@ module.exports = class Server {
     modules = [];
 
     createServer(){
-        this.express = express()
+        this.express = express();
         this.server = http.createServer(this.express);
         this.#attachMiddleware();
     }
@@ -23,8 +23,8 @@ module.exports = class Server {
         this.express.use(bodyParserEncoded);
     }
     assignEnv(){
-        require('dotenv').config()
-        this.config = process.env
+        require('dotenv').config();
+        this.config = process.env;
     }
     constructor() {
         this.createServer();
@@ -33,10 +33,14 @@ module.exports = class Server {
     #enableModules(){
         for (let i = 0; i < this.modules.length; i++) {
             const _module = this.modules[i];
-            if(_module.constructor instanceof Pipeline){
+            if(_module.constructor.prototype instanceof Pipeline){
                 _module.active(this);
             }
         }
+    }
+    /** @param {Pipeline} module */
+    addModule(module){
+        this.modules.push(module);
     }
     run(){
         this.#enableModules();
