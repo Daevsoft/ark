@@ -1,4 +1,4 @@
-const Middleware = require("../../../core/Middleware/Middlewareare");
+const Middleware = require("../../../core/Middleware/Middleware");
 
 class UserRoleAuth extends Middleware {
     handle(request, next, role, permission){

@@ -5,6 +5,9 @@ class HomeController extends Controller{
     index(){
         return view('index.html')
     }
+    saveProduct(){
+        return 'Product saved';
+    }
 }
 
 module.exports = HomeController

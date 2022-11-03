@@ -2,8 +2,8 @@ const view = require("../core/App/View/View");
 const Route = require("../core/Routing/Route");
 const ProductController = require("../app/Controllers/ProductController")
 const HomeController = require("../app/Controllers/HomeController");
-const AuthenticateBasicAuth = require("../app/Http/AuthenticateBasicAuth");
-const Authorize = require("../app/Http/Authorize");
+const Authorize = require("../app/Http/Middleware/Authorize");
+const AuthenticateBasicAuth = require('../app/Http/Middleware/AuthenticateBasicAuth');
 
 Route.get('/user/:name', _ => {
     return `<h2>hello ${_.name}</h2>`;
@@ -15,6 +15,7 @@ Route.get('/other', () => {
 Route.get('/', [HomeController, 'index']);
 
 Route.get('/product', [ProductController, 'index']);
+Route.post('/save-product', [ProductController, 'saveProduct']);
 
 // sample route with function
 Route.post('/login', _ => {

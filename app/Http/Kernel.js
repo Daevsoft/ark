@@ -1,5 +1,5 @@
-const AuthenticateBasicAuth = require("./AuthenticateBasicAuth");
-const Authorize = require("./Authorize");
+const AuthenticateBasicAuth = require("./Middleware/AuthenticateBasicAuth");
+const Authorize = require("./Middleware/Authorize");
 const UserRoleAuth = require("./Middleware/UserRoleAuth");
 
 const routeMiddleware = {
